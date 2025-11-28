@@ -1,4 +1,6 @@
 
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -83,7 +85,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ service, onBack, onBook }
                 </ul>
               ) : (
                 <p className="text-gray-500 italic">
-                  Contattaci per conoscere la lista specifica dei documenti per questo servizio.
+                  Prenota un appuntamento per ricevere assistenza personalizzata.
                 </p>
               )}
             </div>
@@ -121,11 +123,6 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({ service, onBack, onBook }
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0h18M5.25 12h13.5h-13.5zm0 3.75h13.5h-13.5z" />
                 </svg>
               </button>
-
-              <div className="text-center">
-                 <p className="text-xs text-gray-400">Hai bisogno di info veloci?</p>
-                 <a href="#contact" className="text-sm text-blue-600 font-semibold hover:underline">Contattaci</a>
-              </div>
             </div>
           </div>
 

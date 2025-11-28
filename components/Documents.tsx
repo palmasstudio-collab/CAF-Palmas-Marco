@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -50,12 +51,6 @@ const Documents: React.FC<DocumentsProps> = ({ onBookClick }) => {
                     </ul>
                 </div>
             ))}
-
-            <div className="bg-blue-50 p-8 rounded-xl border border-blue-100 text-center">
-                <h3 className="text-xl font-bold text-[#1A202C] mb-3">Hai dubbi sui documenti?</h3>
-                <p className="text-gray-600 mb-6">Non preoccuparti, contattaci e ti forniremo la lista completa personalizzata per la tua situazione.</p>
-                <a href="#contact" className="text-blue-600 font-bold underline underline-offset-4">Contattaci</a>
-            </div>
         </div>
       </div>
     </section>

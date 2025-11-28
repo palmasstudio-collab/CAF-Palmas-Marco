@@ -1,5 +1,6 @@
 
 
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -35,9 +36,9 @@ export const BOOKING_LINK = "https://Palmas-Marco-prenota.short.gy/";
 export const SUCCESSION_LINK = "https://script.google.com/macros/s/AKfycbwPcaB1TFITZNUr-FT8WTMW18F1LN0wP9cMFXkMv27X237u2onGsL6Km4nQFj5yY0wA1Q/exec"; 
 
 export const BRAND_NAME = 'CAF Palmas';
-export const PHONE_NUMBER = '+39 012 345 6789';
-export const EMAIL_ADDRESS = 'info@cafpalmas.it';
-export const ADDRESS = 'Via Roma 123, 00100 Roma';
+export const PHONE_NUMBER = ''; // Rimosso su richiesta
+export const EMAIL_ADDRESS = ''; // Rimosso su richiesta
+export const ADDRESS = 'Via Sardegna 16, 08048 Tortolì (NU)';
 
 export const INSTITUTIONAL_LINKS: InstitutionalLink[] = [
     {
@@ -62,35 +63,7 @@ export const INSTITUTIONAL_LINKS: InstitutionalLink[] = [
     }
 ];
 
-export const NEWS_ARTICLES: JournalArticle[] = [
-    {
-        id: '1',
-        title: 'Scadenza Modello 730/2024',
-        excerpt: 'Ricordiamo a tutti i contribuenti che la scadenza per la presentazione del Modello 730 è fissata al 30 Settembre.',
-        content: 'La stagione dichiarativa è nel vivo. È possibile presentare il modello 730 precompilato o ordinario entro il 30 settembre. Prenota subito il tuo appuntamento per evitare code.',
-        date: 'Oggi',
-        category: 'Scadenze',
-        image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        id: '2',
-        title: 'Bonus Sociali: Nuovi limiti ISEE',
-        excerpt: 'Aggiornati i limiti ISEE per l\'accesso ai bonus luce e gas. Verifica se rientri nelle nuove soglie.',
-        content: 'L\'ARERA ha comunicato i nuovi limiti ISEE per l\'accesso ai bonus sociali per le bollette. Passa in sede per aggiornare il tuo ISEE e verificare il diritto allo sconto in bolletta.',
-        date: 'Ieri',
-        category: 'Agevolazioni',
-        image: 'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        id: '3',
-        title: 'Assegno di Inclusione (ADI): Pagamenti',
-        excerpt: 'In arrivo i pagamenti della mensilità corrente per i beneficiari dell\'Assegno di Inclusione.',
-        content: 'L\'INPS ha comunicato il calendario dei pagamenti. Controlla il saldo sulla tua carta dedicata o verifica lo stato della domanda tramite il nostro sportello.',
-        date: '2 giorni fa',
-        category: 'INPS',
-        image: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&q=80&w=800'
-    }
-];
+export const NEWS_ARTICLES: JournalArticle[] = [];
 
 
 export const SERVICES: Service[] = [
@@ -260,16 +233,6 @@ export const SERVICES: Service[] = [
   }
 ];
 
-export const PRODUCTS: Product[] = [
-    {
-        id: '1',
-        name: 'Consulenza Base',
-        price: 50,
-        category: 'Audio', // Dummy data to satisfy type
-        imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800',
-        description: 'Consulenza generica.',
-        features: ['Supporto', 'Guida']
-    }
-];
+export const PRODUCTS: Product[] = [];
 
 export const JOURNAL_ARTICLES: JournalArticle[] = [];

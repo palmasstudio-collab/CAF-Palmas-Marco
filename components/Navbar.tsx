@@ -1,4 +1,6 @@
 
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -58,7 +60,6 @@ const Navbar: React.FC<NavbarProps> = ({ onNavClick, onBookClick }) => {
             <a href="#services" onClick={(e) => handleLinkClick(e, 'services')} className="hover:text-[#2B6CB0] transition-colors">Servizi</a>
             <a href="#documents" onClick={(e) => handleLinkClick(e, 'documents')} className="hover:text-[#2B6CB0] transition-colors">Documenti</a>
             <a href="#about" onClick={(e) => handleLinkClick(e, 'about')} className="hover:text-[#2B6CB0] transition-colors">Chi Siamo</a>
-            <a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')} className="hover:text-[#2B6CB0] transition-colors">Contatti</a>
           </div>
 
           {/* Right Actions */}
@@ -109,7 +110,6 @@ const Navbar: React.FC<NavbarProps> = ({ onNavClick, onBookClick }) => {
             <a href="#services" onClick={(e) => handleLinkClick(e, 'services')} className="hover:text-[#2B6CB0]">Servizi</a>
             <a href="#documents" onClick={(e) => handleLinkClick(e, 'documents')} className="hover:text-[#2B6CB0]">Documenti</a>
             <a href="#about" onClick={(e) => handleLinkClick(e, 'about')} className="hover:text-[#2B6CB0]">Chi Siamo</a>
-            <a href="#contact" onClick={(e) => handleLinkClick(e, 'contact')} className="hover:text-[#2B6CB0]">Contatti</a>
             
             {/* Mobile Admin Link */}
             <a href="#" onClick={(e) => handleLinkClick(e, 'admin')} className="text-gray-400 text-sm flex items-center gap-2 mt-4">

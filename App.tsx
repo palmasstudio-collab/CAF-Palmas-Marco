@@ -1,4 +1,6 @@
 
+
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -10,7 +12,7 @@ import Hero from './components/Hero';
 import ServicesList from './components/ServicesList';
 import About from './components/About';
 import Documents from './components/Documents';
-import Contact from './components/Contact';
+import LocationSection from './components/LocationSection';
 import Booking from './components/Booking';
 import Succession from './components/Succession';
 import Footer from './components/Footer';
@@ -120,7 +122,7 @@ function App() {
                 onBookClick={handleBookClick}
                 onServiceClick={handleServiceClick}
             />
-            {/* Sezione News RIMOSSA per stabilità */}
+            <LocationSection />
             <InstitutionalLinks />
           </>
         )}
@@ -152,9 +154,7 @@ function App() {
           <About />
         )}
 
-        {view.type === 'contact' && (
-          <Contact fullPage />
-        )}
+        {/* Removed Contact View as requested */}
 
         {view.type === 'admin' && (
             <div className="bg-gray-100 min-h-screen pb-20">
