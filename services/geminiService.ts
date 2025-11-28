@@ -10,10 +10,15 @@ import { JournalArticle } from '../types';
 
 const getApiKey = () => {
   try {
-    // Accesso sicuro a import.meta.env
+    // 1. Cerca prima se l'admin ha salvato la chiave manualmente nel browser
+    const localKey = localStorage.getItem('CAF_GEMINI_KEY');
+    if (localKey && localKey.startsWith('AIza')) {
+        return localKey;
+    }
+
+    // 2. Altrimenti cerca nelle variabili d'ambiente (GitHub Secrets)
     // @ts-ignore
     const env = import.meta && import.meta.env;
-    
     if (env && env.VITE_API_KEY) {
       return env.VITE_API_KEY;
     }
@@ -44,7 +49,7 @@ const getSystemInstruction = () => {
 export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
   try {
     const apiKey = getApiKey();
-    if (!apiKey) return "⚠️ Servizio Chat momentaneamente non disponibile (API Key mancante).";
+    if (!apiKey) return "⚠️ Servizio Chat non configurato. Accedi all'Area Admin per inserire la Chiave API.";
 
     const ai = new GoogleGenAI({ apiKey });
     
@@ -76,7 +81,7 @@ export const fetchFiscalNews = async (): Promise<JournalArticle[]> => {
     const apiKey = getApiKey();
     // Se non c'è la chiave, restituisci le notizie statiche di fallback
     if (!apiKey) {
-      console.log("Using fallback news (No API Key)");
+      console.log("Using fallback news (No API Key found in localStorage or env)");
       return NEWS_ARTICLES;
     }
 

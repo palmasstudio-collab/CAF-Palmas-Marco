@@ -121,7 +121,7 @@ function App() {
                 onBookClick={handleBookClick}
                 onServiceClick={handleServiceClick}
             />
-            {/* Sostituita la sezione About/Contact con News e Link Istituzionali */}
+            {/* Sezione News ripristinata - Funzionerà solo se inserisci la chiave in Admin */}
             <NewsSection />
             <InstitutionalLinks />
           </>
