@@ -9,26 +9,29 @@ import { SERVICES, NEWS_ARTICLES } from '../constants';
 import { JournalArticle } from '../types';
 
 const getApiKey = () => {
+  // 1. Cerca nelle variabili d'ambiente (GitHub Secrets iniettati da Vite)
+  // Accesso sicuro per evitare crash se import.meta o import.meta.env sono undefined
   try {
-    // 1. Cerca prima se l'admin ha salvato la chiave manualmente nel browser
-    const localKey = localStorage.getItem('CAF_GEMINI_KEY');
-    if (localKey && localKey.startsWith('AIza')) {
-        console.log("Usando API Key da LocalStorage (Admin)");
-        return localKey;
-    }
-
-    // 2. Altrimenti cerca nelle variabili d'ambiente (GitHub Secrets)
     // @ts-ignore
-    const env = import.meta && import.meta.env;
-    if (env && env.VITE_API_KEY) {
-      console.log("Usando API Key da Variabili Ambiente (GitHub)");
-      return env.VITE_API_KEY;
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+        // @ts-ignore
+        return import.meta.env.VITE_API_KEY;
     }
   } catch (e) {
-    console.warn("Errore accesso variabili ambiente:", e);
+    console.warn("Error accessing environment variables:", e);
+  }
+
+  // 2. Fallback: Cerca nel LocalStorage (Configurazione manuale Admin)
+  try {
+    const localKey = localStorage.getItem('CAF_GEMINI_KEY');
+    if (localKey && localKey.startsWith('AIza')) {
+        return localKey;
+    }
+  } catch (e) {
+    // Ignore localStorage errors
   }
   
-  console.warn("API Key mancante o non configurata.");
+  console.warn("API Key mancante. Chat e News non funzioneranno.");
   return null;
 };
 
@@ -56,19 +59,17 @@ const getSystemInstruction = () => {
 export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
   try {
     const apiKey = getApiKey();
-    if (!apiKey) return "⚠️ Servizio Chat non configurato. Accedi all'Area Admin per inserire la Chiave API.";
+    if (!apiKey) return "⚠️ Servizio Chat non configurato. La chiave API non è stata rilevata.";
 
     const ai = new GoogleGenAI({ apiKey });
     
     // Utilizziamo Gemini 3 Pro con Thinking Mode abilitato per le query complesse dell'utente.
-    // Questo è fondamentale per un CAF dove la precisione normativa è prioritaria.
     const chat = ai.chats.create({
       model: 'gemini-3-pro-preview', 
       config: {
         systemInstruction: getSystemInstruction(),
-        // Abilitiamo il "Pensiero" per permettere al modello di ragionare sulle normative complesse
         thinkingConfig: { 
-            thinkingBudget: 32768 // Massimo budget per ragionamenti profondi su leggi e requisiti
+            thinkingBudget: 32768
         }
       },
       history: history.map(h => ({
@@ -102,8 +103,7 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
     try {
         const ai = new GoogleGenAI({ apiKey });
         
-        // Per le News usiamo Flash Lite: è velocissimo e perfetto per estrarre dati semplici come le notizie
-        // senza bisogno di ragionamenti complessi.
+        // Per le News usiamo Flash Lite: è velocissimo
         const model = 'gemini-2.5-flash-lite-latest'; 
 
         const prompt = `
@@ -139,7 +139,7 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
         let text = result.text;
         if (!text) throw new Error("Risposta vuota da Gemini");
 
-        // PULIZIA JSON ROBUSTA: Rimuove markdown ```json e ``` se presenti
+        // PULIZIA JSON ROBUSTA
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
         const parsedNews = JSON.parse(text);
