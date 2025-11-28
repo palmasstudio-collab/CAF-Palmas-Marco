@@ -20,7 +20,6 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import ServiceUpload from './components/admin/ServiceUpload';
 import ServiceDetail from './components/ServiceDetail';
 import InstitutionalLinks from './components/InstitutionalLinks';
-import NewsSection from './components/NewsSection';
 import { ViewState, Service } from './types';
 import { SERVICES } from './constants';
 
@@ -121,8 +120,7 @@ function App() {
                 onBookClick={handleBookClick}
                 onServiceClick={handleServiceClick}
             />
-            {/* Sezione News ripristinata - Funzionerà solo se inserisci la chiave in Admin */}
-            <NewsSection />
+            {/* Sezione News RIMOSSA per stabilità */}
             <InstitutionalLinks />
           </>
         )}

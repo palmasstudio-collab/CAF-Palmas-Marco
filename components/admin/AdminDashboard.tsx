@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SERVICES } from '../../constants';
 import { Service } from '../../types';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
@@ -16,23 +16,6 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSelectService }) => {
   const isOnline = useOnlineStatus();
-  const [apiKey, setApiKey] = useState('');
-  const [showKeyInput, setShowKeyInput] = useState(false);
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('CAF_GEMINI_KEY');
-    if (savedKey) setApiKey(savedKey);
-  }, []);
-
-  const handleSaveKey = () => {
-    if (apiKey.trim().startsWith('AIza')) {
-        localStorage.setItem('CAF_GEMINI_KEY', apiKey.trim());
-        alert('Chiave API salvata con successo! Le news e la chat ora funzioneranno.');
-        setShowKeyInput(false);
-    } else {
-        alert('La chiave API non sembra valida (deve iniziare con AIza).');
-    }
-  };
 
   return (
     <div className="max-w-[1200px] mx-auto p-6 min-h-screen">
@@ -62,43 +45,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout, onSelectServi
                  Esci
                </button>
            </div>
-       </div>
-
-       {/* API Key Configuration Panel */}
-       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-           <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowKeyInput(!showKeyInput)}>
-               <div className="flex items-center gap-2 text-[#1A365D]">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-                   </svg>
-                   <span className="font-bold text-sm">Configurazione Intelligenza Artificiale (News & Chat)</span>
-               </div>
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={`w-4 h-4 text-[#1A365D] transition-transform ${showKeyInput ? 'rotate-180' : ''}`}>
-                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-               </svg>
-           </div>
-           
-           {showKeyInput && (
-               <div className="mt-4 animate-fade-in-up">
-                   <p className="text-sm text-gray-600 mb-2">Inserisci qui la tua <strong>Google Gemini API Key</strong> per attivare le news in tempo reale e il chatbot.</p>
-                   <div className="flex gap-2">
-                       <input 
-                           type="password" 
-                           value={apiKey}
-                           onChange={(e) => setApiKey(e.target.value)}
-                           placeholder="Incolla qui la chiave (inizia con AIza...)" 
-                           className="flex-1 px-4 py-2 border border-blue-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                       />
-                       <button 
-                           onClick={handleSaveKey}
-                           className="bg-[#2B6CB0] text-white px-6 py-2 rounded text-sm font-bold hover:bg-[#1A365D] transition-colors"
-                       >
-                           Salva Chiave
-                       </button>
-                   </div>
-                   <p className="text-xs text-gray-400 mt-2">La chiave verrà salvata solo su questo browser.</p>
-               </div>
-           )}
        </div>
 
        {!isOnline && (
