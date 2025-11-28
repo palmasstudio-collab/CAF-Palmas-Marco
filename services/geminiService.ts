@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-
 import { GoogleGenAI } from "@google/genai";
 import { SERVICES } from '../constants';
 
@@ -18,40 +17,22 @@ const getSystemInstruction = () => {
   Ecco i servizi che offriamo:
   ${servicesContext}
   
-  Rispondi alle domande dei clienti su quali documenti servono (in generale), a cosa servono le pratiche (ISEE, 730, ecc.) e come prenotare.
-  IMPORTANTE: Per prenotare, invita sempre l'utente a cliccare sul pulsante "Prenota" presente nel sito.
-  
-  Sii conciso.`;
+  ISTRUZIONI IMPORTANTI:
+  1. Rispondi alle domande dei clienti su quali documenti servono (in generale) e a cosa servono le pratiche.
+  2. Se un utente chiede come prenotare o vuole fissare un appuntamento, rispondi che DEVE cliccare sul pulsante "Prenota" presente nel menu o nella home page. Non puoi prendere appuntamenti direttamente in chat.
+  3. Sii conciso nelle risposte.
+  4. Non inventare servizi che non sono in lista.`;
 };
 
 export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
   try {
-    let apiKey = '';
-    
-    // Tenta di recuperare la chiave da process.env (Node/System) ignorando l'errore TS
-    try {
-       // @ts-ignore
-       if (typeof process !== 'undefined' && process.env) {
-           // @ts-ignore
-           apiKey = process.env.API_KEY || '';
-       }
-    } catch (e) {}
-
-    // Fallback: prova a cercare la chiave in import.meta.env (Vite standard)
-    if (!apiKey) {
-        try {
-            // @ts-ignore
-            if (typeof import.meta !== 'undefined' && import.meta.env) {
-                // @ts-ignore
-                apiKey = import.meta.env.VITE_API_KEY || '';
-            }
-        } catch (e) {}
-    }
+    // Vite espone le variabili d'ambiente con import.meta.env
+    // @ts-ignore
+    const apiKey = import.meta.env.VITE_API_KEY;
     
     if (!apiKey) {
-      // Per evitare errori in build se la chiave manca, ritorniamo un messaggio cortese
-      console.warn("API Key mancante.");
-      return "Mi dispiace, al momento non posso connettermi al server (API Key non configurata).";
+      console.warn("API Key mancante. Assicurati di aver impostato il secret GEMINI_API_KEY su GitHub.");
+      return "⚠️ Configurazione incompleta: Manca la Chiave API di Google. L'amministratore deve configurarla nelle impostazioni del repository (Secrets).";
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -68,10 +49,10 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
     });
 
     const result = await chat.sendMessage({ message: newMessage });
-    return result.text || "Nessuna risposta.";
+    return result.text || "Non ho capito, puoi ripetere?";
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Mi scuso, ma al momento ho difficoltà a reperire le informazioni richieste.";
+    return "Mi dispiace, si è verificato un errore di connessione. Riprova più tardi.";
   }
 };
