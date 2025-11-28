@@ -13,6 +13,7 @@ const getApiKey = () => {
     // 1. Cerca prima se l'admin ha salvato la chiave manualmente nel browser
     const localKey = localStorage.getItem('CAF_GEMINI_KEY');
     if (localKey && localKey.startsWith('AIza')) {
+        console.log("Usando API Key da LocalStorage (Admin)");
         return localKey;
     }
 
@@ -20,6 +21,7 @@ const getApiKey = () => {
     // @ts-ignore
     const env = import.meta && import.meta.env;
     if (env && env.VITE_API_KEY) {
+      console.log("Usando API Key da Variabili Ambiente (GitHub)");
       return env.VITE_API_KEY;
     }
   } catch (e) {
@@ -77,35 +79,36 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
  * Cerca notizie reali usando Google Search Grounding.
  * Copre Fisco, Previdenza, Lavoro e Famiglia.
  */
-export const fetchFiscalNews = async (): Promise<JournalArticle[]> => {
+export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], source: 'live' | 'fallback' }> => {
     const apiKey = getApiKey();
+    
     // Se non c'è la chiave, restituisci le notizie statiche di fallback
     if (!apiKey) {
-      console.log("Using fallback news (No API Key found in localStorage or env)");
-      return NEWS_ARTICLES;
+      console.log("Using fallback news (No API Key found)");
+      return { articles: NEWS_ARTICLES, source: 'fallback' };
     }
 
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const model = 'gemini-2.5-flash';
+        const model = 'gemini-2.5-flash'; // Usa un modello stabile che supporta Search
 
         const prompt = `
-        Cerca le ultimissime notizie di OGGI o IERI in Italia riguardanti questi temi specifici:
-        1. Agenzia delle Entrate / Fisco (es. scadenze, 730, tasse)
-        2. INPS / Pensioni (es. pagamenti, rivalutazioni, opzione donna)
-        3. Lavoro / Bonus (es. cuneo fiscale, naspi, busta paga)
-        4. Famiglia (es. assegno unico, bonus nido)
-
-        Trovami esattamente 3 notizie RILEVANTI e DIVERSE tra loro (copri diversi argomenti se puoi).
+        Cerca le ultimissime notizie di OGGI o IERI in Italia riguardanti:
+        1. Agenzia delle Entrate / Fisco
+        2. INPS / Pensioni
+        3. Lavoro / Bonus
         
-        Restituisci SOLO un array JSON valido (senza markdown) con questo formato per ogni notizia:
+        Trovami 3 notizie RILEVANTI.
+        
+        IMPORTANTE: Restituisci SOLO un array JSON valido. NON usare blocchi markdown. NON scrivere "Ecco il json".
+        Formato:
         [
             {
-                "title": "Titolo breve e accattivante",
-                "excerpt": "Riassunto di 2 righe della notizia",
-                "category": "Una categoria tra: Fisco, INPS, Lavoro, Famiglia",
-                "date": "Oggi" o "Ieri",
-                "url": "Link alla fonte originale se disponibile nel grounding (altrimenti lascia vuoto)"
+                "title": "Titolo",
+                "excerpt": "Riassunto breve",
+                "category": "Fisco" | "INPS" | "Lavoro",
+                "date": "Data (es. Oggi, 2 ore fa)",
+                "url": "Link (opzionale)"
             }
         ]
         `;
@@ -114,17 +117,19 @@ export const fetchFiscalNews = async (): Promise<JournalArticle[]> => {
             model: model,
             contents: prompt,
             config: {
-                tools: [{ googleSearch: {} }], // Attiva la ricerca Google Reale
+                tools: [{ googleSearch: {} }],
                 responseMimeType: "application/json"
             }
         });
 
-        const text = result.text;
-        if (!text) return NEWS_ARTICLES;
+        let text = result.text;
+        if (!text) throw new Error("Risposta vuota da Gemini");
+
+        // PULIZIA JSON ROBUSTA: Rimuove markdown ```json e ``` se presenti
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
         const parsedNews = JSON.parse(text);
         
-        // Mappa le categorie a immagini pertinenti
         const categoryImages: {[key: string]: string} = {
             'Fisco': 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800',
             'INPS': 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&q=80&w=800',
@@ -132,13 +137,11 @@ export const fetchFiscalNews = async (): Promise<JournalArticle[]> => {
             'Famiglia': 'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?auto=format&fit=crop&q=80&w=800'
         };
 
-        // Arricchisci i dati con ID e Immagini
         const finalNews: JournalArticle[] = parsedNews.map((n: any, idx: number) => {
-             // Cerca di estrarre un URL dai chunk di grounding se il modello non l'ha messo nel JSON
+             // Tenta di recuperare l'URL dal grounding se manca nel JSON
              let sourceUrl = n.url;
              if (!sourceUrl && result.candidates?.[0]?.groundingMetadata?.groundingChunks) {
                  const chunks = result.candidates[0].groundingMetadata.groundingChunks;
-                 // Assegna un link a caso dai risultati se pertinente (euristico)
                  if(chunks[idx]?.web?.uri) sourceUrl = chunks[idx].web.uri;
              }
 
@@ -146,7 +149,7 @@ export const fetchFiscalNews = async (): Promise<JournalArticle[]> => {
                 id: `live-${Date.now()}-${idx}`,
                 title: n.title,
                 excerpt: n.excerpt,
-                content: n.excerpt, // Non usato nella card
+                content: n.excerpt,
                 date: n.date,
                 category: n.category || 'Notizie',
                 image: categoryImages[n.category] || categoryImages['Fisco'],
@@ -154,10 +157,10 @@ export const fetchFiscalNews = async (): Promise<JournalArticle[]> => {
              };
         });
 
-        return finalNews.length > 0 ? finalNews : NEWS_ARTICLES;
+        return { articles: finalNews.length > 0 ? finalNews : NEWS_ARTICLES, source: 'live' };
 
     } catch (e) {
-        console.error("Errore recupero news:", e);
-        return NEWS_ARTICLES; // Fallback
+        console.error("ERRORE NEWS:", e);
+        return { articles: NEWS_ARTICLES, source: 'fallback' };
     }
 }

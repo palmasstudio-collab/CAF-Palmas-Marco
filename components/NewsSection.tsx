@@ -12,21 +12,24 @@ import { fetchFiscalNews } from '../services/geminiService';
 const NewsSection: React.FC = () => {
   const [articles, setArticles] = useState<JournalArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [source, setSource] = useState<'live' | 'fallback'>('fallback');
 
   useEffect(() => {
     let mounted = true;
 
     const loadNews = async () => {
       try {
-        const news = await fetchFiscalNews();
+        const result = await fetchFiscalNews();
         if (mounted) {
-          setArticles(news);
+          setArticles(result.articles);
+          setSource(result.source);
           setIsLoading(false);
         }
       } catch (err) {
         console.error("Failed to load news", err);
         if (mounted) {
-           setArticles(NEWS_ARTICLES); // Fallback statico
+           setArticles(NEWS_ARTICLES);
+           setSource('fallback');
            setIsLoading(false);
         }
       }
@@ -44,15 +47,15 @@ const NewsSection: React.FC = () => {
             <div>
                 <span className="text-red-600 font-bold uppercase tracking-widest text-xs mb-2 block flex items-center gap-2">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${source === 'live' ? 'bg-green-400' : 'bg-orange-400'}`}></span>
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${source === 'live' ? 'bg-green-500' : 'bg-orange-500'}`}></span>
                     </span>
-                    Live Update
+                    {source === 'live' ? 'Notizie in Tempo Reale' : 'Notizie in Evidenza (Archivio)'}
                 </span>
                 <h2 className="text-3xl md:text-4xl font-serif text-[#1A202C]">News in Primo Piano</h2>
             </div>
             <div className="hidden md:block text-sm text-gray-500 text-right">
-                Aggiornamenti in tempo reale su<br/>
+                Aggiornamenti su<br/>
                 Fisco, INPS, Lavoro e Famiglia
             </div>
         </div>
