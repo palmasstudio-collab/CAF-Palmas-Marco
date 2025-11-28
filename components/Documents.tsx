@@ -8,7 +8,7 @@ import React from 'react';
 import { SERVICES } from '../constants';
 
 interface DocumentsProps {
-    onBookClick: () => void;
+    onBookClick: (serviceName?: string) => void;
 }
 
 const Documents: React.FC<DocumentsProps> = ({ onBookClick }) => {
@@ -31,7 +31,7 @@ const Documents: React.FC<DocumentsProps> = ({ onBookClick }) => {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                         <h3 className="text-2xl font-serif font-bold text-[#2B6CB0]">{service.title}</h3>
                         <button 
-                            onClick={onBookClick}
+                            onClick={() => onBookClick(service.title)}
                             className="mt-4 md:mt-0 text-sm font-semibold bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
                         >
                             Prenota ora

@@ -6,15 +6,31 @@
 import React, { useState } from 'react';
 import { BOOKING_LINK } from '../constants';
 
-const Booking: React.FC = () => {
+interface BookingProps {
+  preselectedService?: string;
+}
+
+const Booking: React.FC<BookingProps> = ({ preselectedService }) => {
   const [isLoading, setIsLoading] = useState(true);
+
+  // Construct URL with parameter if a service is selected
+  // We assume the destination app can read 'service' or similar parameter
+  // Note: Shorteners often forward params, but the destination script must handle them.
+  const separator = BOOKING_LINK.includes('?') ? '&' : '?';
+  const iframeSrc = preselectedService 
+    ? `${BOOKING_LINK}${separator}service=${encodeURIComponent(preselectedService)}` 
+    : BOOKING_LINK;
 
   return (
     <section className="pt-32 pb-24 px-4 md:px-8 bg-gray-50 min-h-screen">
       <div className="max-w-5xl mx-auto h-full flex flex-col">
         <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-serif text-[#1A202C] mb-4">Prenota il tuo Appuntamento</h2>
-            <p className="text-gray-600">Seleziona il servizio, la data e l'ora che preferisci direttamente qui sotto.</p>
+            <p className="text-gray-600">
+                {preselectedService 
+                  ? `Hai selezionato: ${preselectedService}. Scegli data e ora qui sotto.`
+                  : "Seleziona il servizio, la data e l'ora che preferisci direttamente qui sotto."}
+            </p>
         </div>
 
         <div className="flex-1 bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 relative min-h-[700px]">
@@ -26,7 +42,7 @@ const Booking: React.FC = () => {
             )}
             
             <iframe 
-                src={BOOKING_LINK}
+                src={iframeSrc}
                 title="Prenotazione Appuntamento CAF"
                 className="w-full h-full border-0 min-h-[700px]"
                 onLoad={() => setIsLoading(false)}
@@ -38,7 +54,7 @@ const Booking: React.FC = () => {
             <p className="text-sm text-gray-500">
                 Il calendario non si carica correttamente? 
                 <a 
-                    href={BOOKING_LINK} 
+                    href={iframeSrc} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 font-bold ml-1 hover:underline"

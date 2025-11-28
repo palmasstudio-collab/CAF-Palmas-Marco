@@ -10,8 +10,8 @@ import { SERVICES } from '../constants';
 interface ServicesListProps {
   limit?: number;
   onViewAll?: () => void;
-  onBookClick: () => void;
-  onSuccessionClick?: () => void; // Kept in interface but unused for now to avoid breaking App.tsx immediately, or removed if cleaned up fully.
+  onBookClick: (serviceName?: string) => void;
+  onSuccessionClick?: () => void; 
 }
 
 const ServicesList: React.FC<ServicesListProps> = ({ limit, onViewAll, onBookClick }) => {
@@ -78,7 +78,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ limit, onViewAll, onBookCli
                 
                 <div className="mt-auto pt-6 border-t border-gray-200 space-y-3">
                     <button 
-                        onClick={onBookClick}
+                        onClick={() => onBookClick(service.title)}
                         className="w-full py-3 border font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 group bg-white border-[#2B6CB0] text-[#2B6CB0] hover:bg-[#2B6CB0] hover:text-white"
                     >
                         <span>Prenota Appuntamento</span>
