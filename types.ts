@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -12,6 +13,8 @@ export interface Service {
   category: 'Fiscale' | 'Previdenziale' | 'Famiglia' | 'Lavoro' | 'Altro';
   detailedDescription?: string;
   documents?: string[];
+  faqs?: { question: string; answer: string }[];
+  icon: any; // React component from lucide-react
 }
 
 export interface ChatMessage {
@@ -23,6 +26,7 @@ export interface ChatMessage {
 export type ViewState = 
   | { type: 'home' }
   | { type: 'services' }
+  | { type: 'service-detail' }
   | { type: 'documents' }
   | { type: 'about' }
   | { type: 'contact' }
@@ -48,6 +52,15 @@ export interface JournalArticle {
   content: React.ReactNode;
   date: string;
   image: string;
+  category?: string;
+  url?: string; // Link alla fonte originale
+}
+
+export interface InstitutionalLink {
+    name: string;
+    url: string;
+    logoUrl?: string; // Optional logo
+    description: string;
 }
 
 export interface UploadSlot {

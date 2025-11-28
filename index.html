@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#1A365D" />
     <title>CAF Palmas - Assistenza Fiscale e Previdenziale</title>
     <meta name="description" content="Assistenza fiscale e previdenziale semplice, veloce e vicina a te. Prenota il tuo appuntamento per 730, ISEE, Pensioni e molto altro." />
+    <!-- Manteniamo Tailwind CDN per garantire lo stile se la configurazione locale PostCSS manca -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
@@ -42,12 +43,13 @@
         animation: fade-in-up 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards;
       }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "vite": "https://aistudiocdn.com/vite@^7.2.4",
     "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"

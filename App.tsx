@@ -1,10 +1,10 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
 
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ServicesList from './components/ServicesList';
@@ -18,17 +18,26 @@ import Assistant from './components/Assistant';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 import ServiceUpload from './components/admin/ServiceUpload';
+import ServiceDetail from './components/ServiceDetail';
+import InstitutionalLinks from './components/InstitutionalLinks';
+import NewsSection from './components/NewsSection';
 import { ViewState, Service } from './types';
+import { SERVICES } from './constants';
 
 function App() {
   const [view, setView] = useState<ViewState>({ type: 'home' });
   
+  // Booking Pre-selection State
+  const [preselectedService, setPreselectedService] = useState<string | undefined>(undefined);
+  
+  // Selected Service for Details
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+
   // Admin State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [adminSelectedService, setAdminSelectedService] = useState<Service | null>(null);
 
   // Handle navigation (clicks on Navbar or Footer links)
-  // Updated signature to accept generic MouseEvent to support buttons in Navbar
   const handleNavClick = (e: React.MouseEvent | null, targetView: ViewState['type'], elementId?: string) => {
     if (e) e.preventDefault();
     
@@ -51,9 +60,15 @@ function App() {
     }
   };
 
-  const handleBookClick = () => {
+  const handleBookClick = (serviceName?: string) => {
+      setPreselectedService(serviceName);
       setView({ type: 'booking' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleServiceClick = (serviceId: string) => {
+      setSelectedServiceId(serviceId);
+      setView({ type: 'service-detail' });
   };
 
   const handleAdminLogin = (password: string) => {
@@ -70,7 +85,7 @@ function App() {
       {view.type !== 'admin' && (
           <Navbar 
               onNavClick={handleNavClick} 
-              onBookClick={handleBookClick}
+              onBookClick={() => handleBookClick()}
           />
       )}
       
@@ -96,7 +111,7 @@ function App() {
       <main className={view.type === 'admin' ? 'pt-20' : 'pt-24'}>
         {view.type === 'home' && (
           <>
-            <Hero onBookClick={handleBookClick} />
+            <Hero onBookClick={() => handleBookClick()} />
             <ServicesList 
                 limit={6} 
                 onViewAll={() => {
@@ -104,16 +119,27 @@ function App() {
                     setView({ type: 'services' });
                 }} 
                 onBookClick={handleBookClick}
+                onServiceClick={handleServiceClick}
             />
-            <About condensed />
-            <Contact />
+            {/* Sostituita la sezione About/Contact con News e Link Istituzionali */}
+            <NewsSection />
+            <InstitutionalLinks />
           </>
         )}
 
         {view.type === 'services' && (
           <ServicesList 
             onBookClick={handleBookClick} 
+            onServiceClick={handleServiceClick}
           />
+        )}
+
+        {view.type === 'service-detail' && selectedServiceId && (
+            <ServiceDetail 
+                service={SERVICES.find(s => s.id === selectedServiceId)!}
+                onBack={() => setView({ type: 'services' })}
+                onBook={() => handleBookClick(SERVICES.find(s => s.id === selectedServiceId)?.title)}
+            />
         )}
 
         {view.type === 'documents' && (
@@ -121,7 +147,7 @@ function App() {
         )}
 
         {view.type === 'booking' && (
-          <Booking />
+          <Booking preselectedService={preselectedService} />
         )}
 
         {view.type === 'about' && (
