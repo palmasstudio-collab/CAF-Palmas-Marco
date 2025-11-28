@@ -37,15 +37,20 @@ const getSystemInstruction = () => {
     `- ${s.title}: ${s.description}`
   ).join('\n');
 
-  return `Sei l'Assistente Virtuale di "CAF Palmas".
+  return `Sei l'Assistente Virtuale Esperto del "CAF Palmas".
   
-  Ecco i servizi che offriamo:
+  IL TUO RUOLO:
+  Sei un consulente fiscale virtuale. Devi fornire risposte precise, professionali e basate sulla logica normativa italiana.
+  
+  SERVIZI OFFERTI:
   ${servicesContext}
   
-  ISTRUZIONI:
-  1. Rispondi alle domande sui documenti e servizi.
-  2. Per appuntamenti, dì di usare il pulsante "Prenota".
-  3. Sii conciso.`;
+  ISTRUZIONI DI COMPORTAMENTO:
+  1. **Ragionamento:** Prima di rispondere a domande su requisiti (es. ISEE, Bonus, Pensioni), analizza passo dopo passo la richiesta.
+  2. **Precisione:** Se una domanda è troppo generica per dare una risposta fiscale certa, chiedi i dettagli mancanti (es. "Per il calcolo ISEE mi serve sapere il nucleo familiare").
+  3. **Limiti:** Non inventare normative. Se non sei sicuro, suggerisci di prenotare un appuntamento in sede per una verifica approfondita.
+  4. **Tono:** Professionale, empatico e rassicurante.
+  5. **Prenotazioni:** Per fissare appuntamenti, invita sempre a usare il pulsante "Prenota" nel sito.`;
 };
 
 export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
@@ -55,10 +60,16 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 
     const ai = new GoogleGenAI({ apiKey });
     
+    // Utilizziamo Gemini 3 Pro con Thinking Mode abilitato per le query complesse dell'utente.
+    // Questo è fondamentale per un CAF dove la precisione normativa è prioritaria.
     const chat = ai.chats.create({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview', 
       config: {
         systemInstruction: getSystemInstruction(),
+        // Abilitiamo il "Pensiero" per permettere al modello di ragionare sulle normative complesse
+        thinkingConfig: { 
+            thinkingBudget: 32768 // Massimo budget per ragionamenti profondi su leggi e requisiti
+        }
       },
       history: history.map(h => ({
         role: h.role,
@@ -71,13 +82,13 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Mi dispiace, errore di connessione con l'assistente.";
+    return "Mi dispiace, al momento i nostri sistemi sono molto occupati. Riprova tra poco.";
   }
 };
 
 /**
  * Cerca notizie reali usando Google Search Grounding.
- * Copre Fisco, Previdenza, Lavoro e Famiglia.
+ * Usa Flash-Lite per la massima velocità di caricamento della pagina.
  */
 export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], source: 'live' | 'fallback' }> => {
     const apiKey = getApiKey();
@@ -90,7 +101,10 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
 
     try {
         const ai = new GoogleGenAI({ apiKey });
-        const model = 'gemini-2.5-flash'; // Usa un modello stabile che supporta Search
+        
+        // Per le News usiamo Flash Lite: è velocissimo e perfetto per estrarre dati semplici come le notizie
+        // senza bisogno di ragionamenti complessi.
+        const model = 'gemini-2.5-flash-lite-latest'; 
 
         const prompt = `
         Cerca le ultimissime notizie di OGGI o IERI in Italia riguardanti:
