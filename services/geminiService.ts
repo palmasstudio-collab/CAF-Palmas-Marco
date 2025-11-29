@@ -68,14 +68,11 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 
     const ai = new GoogleGenAI({ apiKey });
     
-    // Utilizziamo Gemini 3 Pro con Thinking Mode abilitato per le query complesse dell'utente.
+    // USIAMO IL MODELLO STABILE (Flash) invece del Pro/Thinking per evitare errori di permessi
     const chat = ai.chats.create({
-      model: 'gemini-3-pro-preview', 
+      model: 'gemini-2.5-flash', 
       config: {
         systemInstruction: getSystemInstruction(),
-        thinkingConfig: { 
-            thinkingBudget: 32768
-        }
       },
       history: history.map(h => ({
         role: h.role,
@@ -88,13 +85,12 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Mi dispiace, al momento i nostri sistemi sono molto occupati. Riprova tra poco.";
+    return "Mi dispiace, al momento i nostri sistemi sono molto occupati o la chiave API non è configurata correttamente.";
   }
 };
 
 /**
  * Cerca notizie reali usando Google Search Grounding.
- * Usa Flash-Lite per la massima velocità di caricamento della pagina.
  */
 export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], source: 'live' | 'fallback' }> => {
     try {
@@ -108,8 +104,8 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
 
         const ai = new GoogleGenAI({ apiKey });
         
-        // Per le News usiamo Flash Lite: è velocissimo
-        const model = 'gemini-2.5-flash-lite-latest'; 
+        // Usiamo lo stesso modello stabile anche per le news
+        const model = 'gemini-2.5-flash'; 
 
         const prompt = `
         Cerca le ultimissime notizie di OGGI o IERI in Italia riguardanti:
