@@ -20,7 +20,6 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import ServiceUpload from './components/admin/ServiceUpload';
 import ServiceDetail from './components/ServiceDetail';
 import InstitutionalLinks from './components/InstitutionalLinks';
-import NewsSection from './components/NewsSection';
 import { ViewState, Service } from './types';
 import { SERVICES } from './constants';
 
@@ -121,7 +120,6 @@ function App() {
                 onBookClick={handleBookClick}
                 onServiceClick={handleServiceClick}
             />
-            <NewsSection />
             <LocationSection />
             <InstitutionalLinks />
           </>
