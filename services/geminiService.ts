@@ -9,19 +9,24 @@ import { SERVICES, NEWS_ARTICLES } from '../constants';
 import { JournalArticle } from '../types';
 
 const getApiKey = () => {
+  let key = '';
+
   // 1. Cerca nelle variabili d'ambiente (GitHub Secrets iniettati da Vite)
-  // Accesso sicuro per evitare crash se import.meta o import.meta.env sono undefined
+  // Accesso ultra-sicuro per evitare crash
   try {
     // @ts-ignore
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_KEY) {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
         // @ts-ignore
-        return import.meta.env.VITE_API_KEY;
+        key = import.meta.env.VITE_API_KEY || '';
     }
   } catch (e) {
-    console.warn("Error accessing environment variables:", e);
+    console.warn("Environment access warning:", e);
   }
 
-  // 2. Fallback: Cerca nel LocalStorage (Configurazione manuale Admin)
+  // 2. Se abbiamo trovato la chiave, ritornala subito
+  if (key && key.length > 5) return key;
+
+  // 3. Fallback: Cerca nel LocalStorage (Configurazione manuale Admin)
   try {
     const localKey = localStorage.getItem('CAF_GEMINI_KEY');
     if (localKey && localKey.startsWith('AIza')) {
@@ -31,7 +36,7 @@ const getApiKey = () => {
     // Ignore localStorage errors
   }
   
-  console.warn("API Key mancante. Chat e News non funzioneranno.");
+  // Non loggare warning qui per non intasare la console, la gestione avviene nel chiamante
   return null;
 };
 
@@ -59,7 +64,7 @@ const getSystemInstruction = () => {
 export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
   try {
     const apiKey = getApiKey();
-    if (!apiKey) return "⚠️ Servizio Chat non configurato. La chiave API non è stata rilevata.";
+    if (!apiKey) return "⚠️ Servizio Chat non disponibile al momento (API Key mancante).";
 
     const ai = new GoogleGenAI({ apiKey });
     
@@ -92,15 +97,15 @@ export const sendMessageToGemini = async (history: {role: string, text: string}[
  * Usa Flash-Lite per la massima velocità di caricamento della pagina.
  */
 export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], source: 'live' | 'fallback' }> => {
-    const apiKey = getApiKey();
-    
-    // Se non c'è la chiave, restituisci le notizie statiche di fallback
-    if (!apiKey) {
-      console.log("Using fallback news (No API Key found)");
-      return { articles: NEWS_ARTICLES, source: 'fallback' };
-    }
-
     try {
+        const apiKey = getApiKey();
+        
+        // Se non c'è la chiave, restituisci le notizie statiche di fallback
+        if (!apiKey) {
+          console.log("Using fallback news (No API Key found)");
+          return { articles: NEWS_ARTICLES, source: 'fallback' };
+        }
+
         const ai = new GoogleGenAI({ apiKey });
         
         // Per le News usiamo Flash Lite: è velocissimo
@@ -142,8 +147,17 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
         // PULIZIA JSON ROBUSTA
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        const parsedNews = JSON.parse(text);
+        // Safe parse
+        let parsedNews;
+        try {
+            parsedNews = JSON.parse(text);
+        } catch (e) {
+            console.warn("JSON Parse Error on News:", e);
+            throw new Error("Invalid JSON");
+        }
         
+        if (!Array.isArray(parsedNews)) throw new Error("Format invalid");
+
         const categoryImages: {[key: string]: string} = {
             'Fisco': 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800',
             'INPS': 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&q=80&w=800',
@@ -156,6 +170,7 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
              let sourceUrl = n.url;
              if (!sourceUrl && result.candidates?.[0]?.groundingMetadata?.groundingChunks) {
                  const chunks = result.candidates[0].groundingMetadata.groundingChunks;
+                 // Cerca un chunk corrispondente se possibile, o prendi il primo disponibile
                  if(chunks[idx]?.web?.uri) sourceUrl = chunks[idx].web.uri;
              }
 
@@ -174,7 +189,7 @@ export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], s
         return { articles: finalNews.length > 0 ? finalNews : NEWS_ARTICLES, source: 'live' };
 
     } catch (e) {
-        console.error("ERRORE NEWS:", e);
+        console.error("News Fetch Error (Safe Fallback):", e);
         return { articles: NEWS_ARTICLES, source: 'fallback' };
     }
 }
