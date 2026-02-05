@@ -1,0 +1,230 @@
+import { GoogleGenAI } from "@google/genai";
+import { SERVICES, NEWS_ARTICLES } from '../constants';
+import { JournalArticle, ImageSize } from '../types';
+
+export const checkAndSelectApiKey = async () => {
+  if (typeof window !== 'undefined' && (window as any).aistudio) {
+    const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+    if (!hasKey) {
+      await (window as any).aistudio.openSelectKey();
+    }
+  }
+};
+
+const getApiKey = () => {
+  return process.env.API_KEY || '';
+};
+
+const getSystemInstruction = () => {
+  const servicesContext = SERVICES.map(s => 
+    `- ${s.title}: ${s.description}`
+  ).join('\n');
+
+  return `Sei l'Assistente Virtuale Esperto del "CAF Palmas".
+  
+  IL TUO RUOLO:
+  Sei un consulente fiscale virtuale. Devi fornire risposte precise, professionali e basate sulla logica normativa italiana.
+  
+  SERVIZI OFFERTI:
+  ${servicesContext}
+  
+  ISTRUZIONI DI COMPORTAMENTO:
+  1. **Ragionamento:** Prima di rispondere a domande su requisiti (es. ISEE, Bonus, Pensioni), analizza passo dopo passo la richiesta.
+  2. **Precisione:** Se una domanda è troppo generica per dare una risposta fiscale certa, chiedi i dettagli mancanti (es. "Per il calcolo ISEE mi serve sapere il nucleo familiare").
+  3. **Limiti:** Non inventare normative. Se non sei sicuro, suggerisci di prenotare un appuntamento in sede per una verifica approfondita.
+  4. **Tono:** Professionale, empatico e rassicurante.
+  5. **Prenotazioni:** Per fissare appuntamenti, invita sempre a usare il pulsante "Prenota" nel sito.`;
+};
+
+export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey) return "⚠️ Servizio Chat non disponibile al momento (API Key mancante).";
+
+    const ai = new GoogleGenAI({ apiKey });
+    
+    // USIAMO IL MODELLO STABILE (Flash) invece del Pro/Thinking per evitare errori di permessi
+    const chat = ai.chats.create({
+      model: 'gemini-3-flash-preview', 
+      config: {
+        systemInstruction: getSystemInstruction(),
+      },
+      history: history.map(h => ({
+        role: h.role,
+        parts: [{ text: h.text }]
+      }))
+    });
+
+    const result = await chat.sendMessage({ message: newMessage });
+    return result.text || "Non ho capito, puoi ripetere?";
+
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return "Mi dispiace, al momento i nostri sistemi sono molto occupati o la chiave API non è configurata correttamente.";
+  }
+};
+
+/**
+ * Cerca notizie reali usando Google Search Grounding.
+ */
+export const fetchFiscalNews = async (): Promise<{ articles: JournalArticle[], source: 'live' | 'fallback' }> => {
+    try {
+        const apiKey = getApiKey();
+        
+        // Se non c'è la chiave, restituisci le notizie statiche di fallback
+        if (!apiKey) {
+          console.log("Using fallback news (No API Key found)");
+          return { articles: NEWS_ARTICLES, source: 'fallback' };
+        }
+
+        const ai = new GoogleGenAI({ apiKey });
+        
+        // Usiamo lo stesso modello stabile anche per le news
+        const model = 'gemini-3-flash-preview'; 
+
+        const prompt = `
+        Cerca le ultimissime notizie di OGGI o IERI in Italia riguardanti:
+        1. Agenzia delle Entrate / Fisco
+        2. INPS / Pensioni
+        3. Lavoro / Bonus
+        
+        Trovami 3 notizie RILEVANTI.
+        
+        IMPORTANTE: Restituisci SOLO un array JSON valido. NON usare blocchi markdown. NON scrivere "Ecco il json".
+        Formato:
+        [
+            {
+                "title": "Titolo",
+                "excerpt": "Riassunto breve",
+                "category": "Fisco" | "INPS" | "Lavoro",
+                "date": "Data (es. Oggi, 2 ore fa)",
+                "url": "Link (opzionale)"
+            }
+        ]
+        `;
+
+        const result = await ai.models.generateContent({
+            model: model,
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+                responseMimeType: "application/json"
+            }
+        });
+
+        let text = result.text;
+        if (!text) throw new Error("Risposta vuota da Gemini");
+
+        // PULIZIA JSON ROBUSTA
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        // Safe parse
+        let parsedNews;
+        try {
+            parsedNews = JSON.parse(text);
+        } catch (e) {
+            console.warn("JSON Parse Error on News:", e);
+            throw new Error("Invalid JSON");
+        }
+        
+        if (!Array.isArray(parsedNews)) throw new Error("Format invalid");
+
+        const categoryImages: {[key: string]: string} = {
+            'Fisco': 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800',
+            'INPS': 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?auto=format&fit=crop&q=80&w=800',
+            'Lavoro': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&q=80&w=800',
+            'Famiglia': 'https://images.unsplash.com/photo-1633158829585-23ba8f7c8caf?auto=format&fit=crop&q=80&w=800'
+        };
+
+        const finalNews: JournalArticle[] = parsedNews.map((n: any, idx: number) => {
+             // Tenta di recuperare l'URL dal grounding se manca nel JSON
+             let sourceUrl = n.url;
+             if (!sourceUrl && result.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+                 const chunks = result.candidates[0].groundingMetadata.groundingChunks;
+                 // Cerca un chunk corrispondente se possibile, o prendi il primo disponibile
+                 if(chunks[idx]?.web?.uri) sourceUrl = chunks[idx].web.uri;
+             }
+
+             return {
+                id: `live-${Date.now()}-${idx}`,
+                title: n.title,
+                excerpt: n.excerpt,
+                content: n.excerpt,
+                date: n.date,
+                category: n.category || 'Notizie',
+                image: categoryImages[n.category] || categoryImages['Fisco'],
+                url: sourceUrl
+             };
+        });
+
+        return { articles: finalNews.length > 0 ? finalNews : NEWS_ARTICLES, source: 'live' };
+
+    } catch (e) {
+        console.error("News Fetch Error (Safe Fallback):", e);
+        return { articles: NEWS_ARTICLES, source: 'fallback' };
+    }
+}
+
+export const generateImagePro = async (prompt: string, size: ImageSize): Promise<string[]> => {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API Key required");
+
+  // Create new instance to ensure latest key is used if selected via dialog
+  const ai = new GoogleGenAI({ apiKey });
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-image-preview',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      imageConfig: {
+        aspectRatio: "1:1",
+        imageSize: size
+      }
+    },
+  });
+
+  const images: string[] = [];
+  if (response.candidates?.[0]?.content?.parts) {
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData && part.inlineData.data) {
+        images.push(`data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`);
+      }
+    }
+  }
+  return images;
+};
+
+export const editImageFlash = async (base64Image: string, mimeType: string, prompt: string): Promise<string[]> => {
+   const apiKey = getApiKey();
+   if (!apiKey) throw new Error("API Key required");
+
+   const ai = new GoogleGenAI({ apiKey });
+
+   // Clean base64 string if it contains data URI prefix
+   const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+
+   const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: mimeType
+            }
+          },
+          { text: prompt }
+        ]
+      }
+   });
+
+   const images: string[] = [];
+   if (response.candidates?.[0]?.content?.parts) {
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData && part.inlineData.data) {
+        images.push(`data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`);
+      }
+    }
+  }
+  return images;
+};
